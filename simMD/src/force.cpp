@@ -89,6 +89,14 @@ Force::calc_stretching(Variables *vars){
             F[3*(p+1)+i]-= val ;
         }
     }
+
+    // 周期境界の所の計算
+    coeff = (b[PN-1]-l_eq)*one_over_delta_delta;
+    for(int i=0;i<3;i++){
+        val = coeff*u[3*(PN-1)+i];
+        F[3*(PN-1)+i]   += val;
+        F[i]            -= val;
+    }
 }
 
 // ----------------------------------Bending------------------------------------------

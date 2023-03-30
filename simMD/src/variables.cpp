@@ -24,9 +24,15 @@ Variables::calc_u(void){
     const int PN = num;
     for(int p=0;p<PN;p++){
         double sd = 0.0; // squared distance
-        for(int i=0;i<3;i++){
-           u[3*p+i] = r[3*(p+1)+i] - r[3*p+i];
-           sd += u[3*p+i]*u[3*p+i];
+        for(int i=0;i<3;i++){   
+            // 端
+            if (p==PN-1){
+                u[3*p+i] = r[i] - r[3*p+i];
+            // バルク
+            }else{
+                u[3*p+i] = r[3*(p+1)+i] - r[3*p+i];
+            }
+            sd += u[3*p+i]*u[3*p+i];
         }
         // bを格納
         b[p] = sqrt(sd);

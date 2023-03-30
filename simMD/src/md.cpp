@@ -160,9 +160,9 @@ MD::update_corr(vector<double> &R){
 //-----------------------1つのtrajectoryを作り、confファイルを吐く-----------------------------
 void 
 MD::make_trajectory(void){
-    const int STEP      = 10000;
+    const int STEP      = 100000;
     const int DISPOSE   = 0;
-    const int INTERVAL  = 10;
+    const int INTERVAL  = 50;
 
     random_device rnd;
     mt19937 mt(rnd());
