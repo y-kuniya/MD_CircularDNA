@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.1)
+project(simulationMD CXX)
+add_subdirectory(./simMD)
+add_executable(main_app main.cpp)
+target_link_libraries(main_app  simMD)
