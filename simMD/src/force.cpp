@@ -6,8 +6,8 @@ Force::init(const int PN_){
     PN  = PN_;
     SIZE= 3*PN;
     F.resize(SIZE,0.0);
-    cosBeta.resize(PN-1,0.0);
-    Beta_over_sinBeta.resize(PN-1,0.0);
+    cosBeta.resize(PN,0.0);
+    Beta_over_sinBeta.resize(PN,0.0);
 }
 
 void 
@@ -112,9 +112,15 @@ Force::calc_Beta(Variables *vars){
         }
     }
 
+    // 周期境界条件
+    cosBeta[PN-1]=0.0;
+    for(int i=0;i<3;i++){
+        cosBeta[PN-1] += u[i]*u[3*(PN-1)+i];
+    } 
+
     // Beta / sin(Beta)
     double angle;
-    for(int p=0;p<PN-1;p++){
+    for(int p=0;p<PN;p++){
         angle = acos(cosBeta[p]);
         if (angle <1e-4){
             Beta_over_sinBeta[p] = 1.0;
@@ -134,7 +140,7 @@ Force::calc_bending(Variables *vars){
     double *inv_b = vars->inv_b.data();
 
      // Aについての更新
-    for(int p=0;p<PN-2;p++){
+    for(int p=0;p<PN-1;p++){
         for(int i=0;i<3;i++){
             val = one_over_psi_psi*Beta_over_sinBeta[p]*inv_b[p]*( u[3*(p+1)+i]-u[3*p+i]*cosBeta[p] );
             F[3*p+i]    += -val;
@@ -142,8 +148,21 @@ Force::calc_bending(Variables *vars){
         }
     }
 
+    for(int i=0;i<3;i++){
+            val = one_over_psi_psi*Beta_over_sinBeta[PN-1]*inv_b[PN-1]*( u[i]-u[3*(PN-1)+i]*cosBeta[PN-1] );
+            F[3*(PN-1)+i]   += -val;
+            F[i]            +=  val;
+    }
+
+    
     // Bについての更新
-    for(int p=1;p<PN-1;p++){
+    for(int i=0;i<3;i++){
+            val = one_over_psi_psi*Beta_over_sinBeta[PN-1]*inv_b[0]*(u[3*(PN-1)+i]-u[i]*cosBeta[PN-1]);
+            F[i]    += -val;
+            F[3+i]  +=  val;
+    }
+
+    for(int p=1;p<PN;p++){
         for(int i=0;i<3;i++){
             val = one_over_psi_psi*Beta_over_sinBeta[p-1]*inv_b[p]*(u[3*(p-1)+i]-u[3*p+i]*cosBeta[p-1]);
             F[3*p+i]    += -val;
