@@ -5,9 +5,15 @@ void
 Force::init(const int PN_){
     PN  = PN_;
     SIZE= 3*PN;
+
     F.resize(SIZE,0.0);
+    // 曲げ角
     cosBeta.resize(PN,0.0);
     Beta_over_sinBeta.resize(PN,0.0);
+    // ねじれ角
+    cosAG.resize(PN,0.0);
+    sinAG.resize(PN,0.0);
+    AG.resize(PN,0.0);
 }
 
 void 
@@ -32,7 +38,7 @@ Force::calc_force(Variables *vars){
     calc_bending(vars);
 }
 
-// #include<iostream>
+
 // ----------------------------------excluded volume-------------------------------------
 void 
 Force::calc_excluedVolume(Variables *vars){
@@ -169,4 +175,61 @@ Force::calc_bending(Variables *vars){
             F[3*(p+1)+i]+=  val;
         }
     }
+}
+
+
+// ----------------------------------Torsional------------------------------------------
+// 必ずBetaの計算の後に呼び出すこと
+void 
+Force::calc_AlphaPlusGamma(Variables *vars){
+    double *f = vars->f.data();
+    double *v = vars->v.data();
+    double *u = vars->u.data();
+
+    // cos(Alpha + Gamma) 
+    for(int p=0;p<PN-1;p++){
+        cosAG[p] = 0.0;
+        for(int i=0;i<3;i++){
+            cosAG[p] += f[3*p+i]*f[3*(p+1)+i] + v[3*p+i]*v[3*(p+1)+i]; 
+        }
+        cosAG[p] /= (1.0 + cosBeta[p]);
+    }
+    
+    cosAG[PN-1] = 0.0;
+    for(int i=0;i<3;i++){
+        cosAG[PN-1] += f[3*(PN-1)+i]*f[i] + v[3*(PN-1)+i]*v[i];
+    }
+    cosAG[PN-1] /= (1.0+cosBeta[PN-1]);
+
+    // sin(Alpha + Gamma)
+    for(int p=0;p<PN-1;p++){
+        sinAG[p] = 0.0;
+        for(int i=0;i<3;i++){
+            sinAG[p] += v[3*p+i]*f[3*(p+1)+i] - f[3*p+i]*v[3*(p+1)+i];
+        }
+        sinAG[p] /= (1.0+cosBeta[p]);
+    }
+
+    sinAG[PN-1] = 0.0;
+    for(int i=0;i<3;i++){
+        sinAG[PN-1] += v[3*(PN-1)+i]*f[i] - f[3*(PN-1)+i]*v[i];
+    }
+    sinAG[PN-1] /= (1.0+cosBeta[PN-1]);
+
+    // Alpha + Gamma 
+    for(int p=0;p<PN;p++){
+        AG[p] = acos(cosAG[p]);
+        if (sinAG[p] < 0.0) AG[p] *= -1.0;
+    }
+}
+
+
+void
+Force::calc_torsional(Variables *vars){
+
+    double *f = vars->f.data();
+    double *v = vars->v.data();
+    double *u = vars->u.data();
+    double *inv_b = vars->inv_b.data();
+
 }

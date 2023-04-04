@@ -10,11 +10,16 @@ class Force{
     int SIZE;
     vector<double> cosBeta;
     vector<double> Beta_over_sinBeta;
+    vector<double> cosAG;
+    vector<double> sinAG;
+    vector<double> AG;
     void clear(void);
     void calc_excluedVolume(Variables *vars);
     void calc_stretching(Variables *vars);
-    void calc_Beta(Variables *vars);
+    void calc_Beta(Variables *vars);    // 曲げ角
     void calc_bending(Variables *vars);
+    void calc_AlphaPlusGamma(Variables *vars); // ねじれ角
+    void calc_torsional(Variables *vars);
 
     public:
     vector<double> F;
