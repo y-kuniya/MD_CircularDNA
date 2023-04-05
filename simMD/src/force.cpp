@@ -10,6 +10,7 @@ Force::init(const int PN_){
     // 曲げ角
     cosBeta.resize(PN,0.0);
     Beta_over_sinBeta.resize(PN,0.0);
+    inv_1_Plus_cosBeta.resize(PN,0.0);
     // ねじれ角
     cosAG.resize(PN,0.0);
     sinAG.resize(PN,0.0);
@@ -134,6 +135,11 @@ Force::calc_Beta(Variables *vars){
             Beta_over_sinBeta[p] = angle/sqrt(1.0 - cosBeta[p]*cosBeta[p]);
         }
     }
+
+    // 1.0/(1.0 + cos(Beta))
+    for(int p=0;p<PN;p++){
+        inv_1_Plus_cosBeta[p] = 1.0/(1.0 + cosBeta[p]);
+    }
 }
 
 
@@ -192,14 +198,12 @@ Force::calc_AlphaPlusGamma(Variables *vars){
         for(int i=0;i<3;i++){
             cosAG[p] += f[3*p+i]*f[3*(p+1)+i] + v[3*p+i]*v[3*(p+1)+i]; 
         }
-        cosAG[p] /= (1.0 + cosBeta[p]);
     }
     
     cosAG[PN-1] = 0.0;
     for(int i=0;i<3;i++){
         cosAG[PN-1] += f[3*(PN-1)+i]*f[i] + v[3*(PN-1)+i]*v[i];
     }
-    cosAG[PN-1] /= (1.0+cosBeta[PN-1]);
 
     // sin(Alpha + Gamma)
     for(int p=0;p<PN-1;p++){
@@ -207,14 +211,19 @@ Force::calc_AlphaPlusGamma(Variables *vars){
         for(int i=0;i<3;i++){
             sinAG[p] += v[3*p+i]*f[3*(p+1)+i] - f[3*p+i]*v[3*(p+1)+i];
         }
-        sinAG[p] /= (1.0+cosBeta[p]);
     }
 
     sinAG[PN-1] = 0.0;
     for(int i=0;i<3;i++){
         sinAG[PN-1] += v[3*(PN-1)+i]*f[i] - f[3*(PN-1)+i]*v[i];
     }
-    sinAG[PN-1] /= (1.0+cosBeta[PN-1]);
+
+    // 1/(1+cosBeta)をかける
+    for(int p=0;p<PN;p++){
+        cosAG[p] *= inv_1_Plus_cosBeta[p];
+        sinAG[p] *= inv_1_Plus_cosBeta[p];
+    }
+
 
     // Alpha + Gamma 
     for(int p=0;p<PN;p++){
@@ -226,10 +235,97 @@ Force::calc_AlphaPlusGamma(Variables *vars){
 
 void
 Force::calc_torsional(Variables *vars){
+    const double one_over_xi_xi = 1.0/(xi*xi);
 
     double *f = vars->f.data();
     double *v = vars->v.data();
     double *u = vars->u.data();
     double *inv_b = vars->inv_b.data();
+
+        
+    double val;
+    double Vu,Fu;
+    //Aについての更新
+    // p=0の場合 
+    Vu = 0.0;
+    Fu = 0.0;
+    for(int i=0;i<3;i++){
+        Vu += u[3*(PN-1)+i]*v[i];
+        Fu += u[3*(PN-1)+i]*f[i];
+    }
+    for(int i=0;i<3;i++){
+        val = Vu*f[i] + Fu*v[i];
+        val*= inv_b[0]*inv_1_Plus_cosBeta[PN-1];
+        val*= AG[PN-1]*one_over_xi_xi;
+        F[i]    += val;
+        F[3+i]  -= val;
+    }
+
+    // p = 1 ~ PN-2
+    for(int p=1;p<PN-1;p++){
+        Vu = 0.0;
+        Fu = 0.0;
+        for(int i=0;i<3;i++){
+            Vu += u[3*(p-1)+i]*v[3*p+i];
+            Fu += u[3*(p-1)+i]*f[3*p+i];
+        }
+        for(int i=0;i<3;i++){
+            val = Vu*f[3*p+i] + Fu*v[3*p+i];
+            val*= inv_b[p]*inv_1_Plus_cosBeta[p-1];
+            val*= AG[p-1]*one_over_xi_xi;
+            F[3*p+i]    += val;
+            F[3*(p+1)+i]-= val;
+        }
+    }
+
+    // p = PN-1 の場合
+    Vu = 0.0;
+    Fu = 0.0;
+    for(int i=0;i<3;i++){
+        Vu += u[3*(PN-2)+i]*v[3*(PN-1)+i];
+        Fu += u[3*(PN-2)+i]*f[3*(PN-1)+i];
+    }
+    for(int i=0;i<3;i++){
+        val = Vu*f[3*(PN-1)+i] + Fu*v[3*(PN-1)+i];
+        val*= inv_b[PN-1]*inv_1_Plus_cosBeta[PN-2];
+        val*= AG[PN-2]*one_over_xi_xi;
+        F[3*(PN-1)+i]   += val;
+        F[i]            -= val;
+    }
+
+
+    double Uf,Uv;
+    // Bについての更新
+    for(int p=0;p<PN-1;p++){
+        Uv = 0.0;
+        Uf = 0.0;
+        for(int i=0;i<3;i++){
+            Uv += v[3*p+i]*u[3*(p+1)+i];
+            Uf += f[3*p+i]*u[3*(p+1)+i];
+        }
+        for(int i=0;i<3;i++){
+            val = -Uv*f[3*p+i] + Uf*v[3*p+i];
+            val *= inv_b[p]*inv_1_Plus_cosBeta[p];
+            val *= AG[p]*one_over_xi_xi;
+            F[3*p+i]    += val;
+            F[3*(p+1)+i]-= val;
+        }
+    }
+
+    // p = N-2,N-1の場合が周期境界条件に相当するものと思われる
+    // p = N-1
+    Uv = 0.0;
+    Uf = 0.0;
+    for(int i=0;i<3;i++){
+            Uv += v[3*(PN-1)+i]*u[i];
+            Uf += f[3*(PN-1)+i]*u[i];
+    }
+    for(int i=0;i<3;i++){
+            val = -Uv*f[3*(PN-1)+i] + Uf*v[3*(PN-1)+i];
+            val *= inv_b[PN-1]*inv_1_Plus_cosBeta[PN-1];
+            val *= AG[PN-1]*one_over_xi_xi;
+            F[3*(PN-1)+i]   += val;
+            F[i]            -= val;
+    }
 
 }

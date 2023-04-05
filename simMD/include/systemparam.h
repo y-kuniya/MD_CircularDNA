@@ -14,6 +14,7 @@ const double l_eq   = 1.0;
 const double delta  = 0.008;
 const double dt     = 0.00005;
 const double psi    = 0.35687;
+const double xi     = 1000;
 const double cutoff = 1.8*l_eq;
 const double epsilon= 1.9e-6;
 

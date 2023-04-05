@@ -10,6 +10,7 @@ class Force{
     int SIZE;
     vector<double> cosBeta;
     vector<double> Beta_over_sinBeta;
+    vector<double> inv_1_Plus_cosBeta;
     vector<double> cosAG;
     vector<double> sinAG;
     vector<double> AG;
