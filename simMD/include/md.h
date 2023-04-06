@@ -18,12 +18,16 @@ class MD{
     SquareVec D_corr;
     SquareVec D_sqrt;
     vector<double> S;
+    vector<double> DT;
+    vector<double> u_sub;
     int PN;
     int SIZE;
     void set_PN(int PN_);
     void makeconf(void);
     void update_pred(vector<double> &R);
     void update_corr(vector<double> &R);
+    void update_frame_pred(vector<double> &R);
+    void update_frame_corr(vector<double> &R);
     public:
     MD(void);
     ~MD(void);

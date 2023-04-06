@@ -18,6 +18,8 @@ class Variables{
     Variables(void);
     void init(int num_) ;
     void calc_u(void);
+    void modify_f(void);
+    void calc_v(void);
     void calc_center(void);
     void export_conf(void);
 

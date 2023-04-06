@@ -45,6 +45,43 @@ Variables::calc_u(void){
 }
 
 void 
+Variables::modify_f(void){
+    const int PN = num;
+    double f_dot_u,norm_f,inv_norm_f;
+
+    for(int p=0;p<PN;p++){
+        // fからuの方向を引く
+        f_dot_u = 0.0;
+        for(int i=0;i<3;i++){
+            f_dot_u += f[3*p+i]*u[3*p+i];
+        }
+        for(int i=0;i<3;i++){
+            f[3*p+i] -= f_dot_u*u[3*p+i];
+        }
+        // fを規格化する
+        norm_f = 0.0;
+        for(int i=0;i<3;i++){
+            norm_f += f[3*p+i]*f[3*p+i];
+        }
+        norm_f = sqrt(norm_f);
+        inv_norm_f = 1.0/norm_f;
+        for(int i=0;i<3;i++){
+            f[3*p+i] *= inv_norm_f;
+        }
+    }
+}
+
+void 
+Variables::calc_v(void){
+    const int PN = num;
+    for(int p=0;p<PN;p++){
+        v[3*p]     = u[3*p+1]*f[3*p+2] - u[3*p+2]*f[3*p+1];
+        v[3*p+1]   = u[3*p+2]*f[3*p] - u[3*p]*f[3*p+2];
+        v[3*p+2]   = u[3*p]*f[3*p+1] - u[3*p+1]*f[3*p]; 
+    }   
+}
+
+void 
 Variables::calc_center(void){
     for(int i=0;i<3;i++){
         c[i] = 0.0;

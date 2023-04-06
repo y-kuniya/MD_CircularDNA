@@ -17,5 +17,6 @@ const double psi    = 0.35687;
 const double xi     = 0.31395;
 const double cutoff = 1.8*l_eq;
 const double epsilon= 1.9e-6;
+const double Dr     = 3.0;
 
 #endif 

@@ -7,6 +7,7 @@ Force::init(const int PN_){
     SIZE= 3*PN;
 
     F.resize(SIZE,0.0);
+    T.resize(PN,0.0);
     // 曲げ角
     cosBeta.resize(PN,0.0);
     Beta_over_sinBeta.resize(PN,0.0);
@@ -39,6 +40,18 @@ Force::calc_force(Variables *vars){
     calc_bending(vars);
 }
 
+// ------------------------------------トルクの計算-------------------------------------------
+// 必ず力の計算を行った後に呼び出す
+void 
+Force::calc_torque(){
+    const double one_over_xi_xi = 1.0/(xi*xi);
+
+    T[0] = one_over_xi_xi*(AG[0] - AG[PN-1]);
+
+    for(int p=1;p<PN;p++){
+        T[p] = one_over_xi_xi*(AG[p] - AG[p-1]);
+    }
+}
 
 // ----------------------------------excluded volume-------------------------------------
 void 

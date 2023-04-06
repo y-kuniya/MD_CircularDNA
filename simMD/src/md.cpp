@@ -31,6 +31,8 @@ MD::set_PN(int PN_){
     D_corr.resize(SIZE, vector<double>(SIZE,0.0));
     D_sqrt.resize(SIZE, vector<double>(SIZE,0.0));
     S.resize(SIZE, 0.0);
+    DT.resize(SIZE,0.0);
+    u_sub.resize(SIZE,0.0);
     vars->init(PN);
     vars_pred->init(PN);
     force->init(PN);
@@ -82,7 +84,7 @@ MD::makeconf(void){
     }
 
     // b.inv_bの計算
-    vars->calc_u();
+    // vars->calc_u();
     
 }
 
@@ -115,8 +117,6 @@ MD::update_pred(vector<double> &R){
             r_pred[i] += D_sqrt[i][j]*R[j];
         }
     }
-    // 5. r_predの更新が終わったので、フレームの計算をする
-    vars_pred->calc_u();
 }
 
 // -----------------------修正子の計算-----------------------------
@@ -153,7 +153,89 @@ MD::update_corr(vector<double> &R){
         }
     }
     // 5. 位置の計算が終わったのでフレームの計算
+    // vars->calc_u();
+}
+
+// -----------------------フレームに関した予測子の計算-----------------------
+void 
+MD::update_frame_pred(vector<double> &R){
+    double delta_phi,f_dot_u;
+    double uxf[3];
+
+    double *f = vars->f.data();
+    double *u = vars->u.data();
+    double *f_pred = vars_pred->f.data();
+    double *u_pred = vars_pred->u.data();
+    double *T = force->T.data();
+
+    // 1. u_predの計算
+    vars_pred->calc_u();
+    // 2. ねじれ弾性によるトルクの計算
+    force->calc_torque();
+    // 3. fの更新
+    for(int p=0;p<PN;p++){    
+        // 2-1. delta_phiの計算
+        DT[p] = Dr*T[p]*dt;
+        delta_phi = DT[p] + R[p];
+        // 2-2. f_predの更新
+        f_dot_u = 0.0;
+        for(int i=0;i<3;i++){
+            f_dot_u += f[3*p+i]*u_pred[3*p+i];
+        }
+        uxf[0] = u[3*p+1]*f[3*p+2] - u[3*p+2]*f[3*p+1];
+        uxf[1] = u[3*p+2]*f[3*p] - u[3*p]*f[3*p+2];
+        uxf[2] = u[3*p]*f[3*p+1] - u[3*p+1]*f[3*p];
+        
+        for(int i=0;i<3;i++){
+            f_pred[3*p+i] = f[3*p+i] + delta_phi*uxf[i] - u[3*p+i]*f_dot_u; 
+        }
+    }
+    // 3. f_predの修正
+    vars_pred->modify_f();
+    // 4. v_predの計算
+    vars_pred->calc_v();
+}
+
+// -----------------------フレームに関した修正子の計算-----------------------
+void 
+MD::update_frame_corr(vector<double> &R){
+    double delta_phi,f_dot_u;
+    double uxf[3];
+
+    double *f = vars->f.data();
+    double *u = vars->u.data();
+    double *T = force->T.data();
+
+    // 1. uの更新
+    for(int pi=0;pi<SIZE;pi++){
+        u_sub[pi] = u[pi];
+    }
     vars->calc_u();
+    // 2. ねじれ弾性によるトルクの計算
+    force->calc_torque();
+    // 3.fの更新
+    for(int p=0;p<PN;p++){
+        // 2-1. delta_phiの計算
+        DT[p] += Dr*T[p]*dt;
+        DT[p] *= 0.5;
+        delta_phi = DT[p] + R[p];
+        // 2-2. fの更新
+        f_dot_u = 0.0;
+        for(int i=0;i<3;i++){
+            f_dot_u += f[3*p+i]*u[3*p+i];
+        }
+        uxf[0] = u_sub[3*p+1]*f[3*p+2] - u_sub[3*p+2]*f[3*p+1];
+        uxf[1] = u_sub[3*p+2]*f[3*p] - u_sub[3*p]*f[3*p+2];
+        uxf[2] = u_sub[3*p]*f[3*p+1] - u_sub[3*p+1]*f[3*p];
+        
+        for(int i=0;i<3;i++){
+            f[3*p+i] = f[3*p+i] + delta_phi*uxf[i] - u_sub[3*p+i]*f_dot_u; 
+        }
+    }
+    // 4. fの修正
+    vars->modify_f();
+    // 5. vの計算
+    vars->calc_v();
 }
 
 

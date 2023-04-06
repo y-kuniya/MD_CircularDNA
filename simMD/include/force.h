@@ -24,8 +24,10 @@ class Force{
 
     public:
     vector<double> F;
+    vector<double> T;
     void init(const int PN_);
     void calc_force(Variables *vars);
+    void calc_torque();
 };
 
 #endif
