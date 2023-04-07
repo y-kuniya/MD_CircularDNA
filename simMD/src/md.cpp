@@ -104,7 +104,7 @@ MD::makeconf(void){
     SquareVec R_beta(3,vector<double>(3,0.0));
     SquareVec R_gamma(3,vector<double>(3,0.0));
 
-    double alpha,beta,gamma;
+    double alpha,beta,gamma_angle;
 
     // ---1. フレームの設定---
     // y軸回転は一定なので最初に設定する
@@ -125,9 +125,9 @@ MD::makeconf(void){
     for(int p=1;p<PN;p++){
         // Frameの回転
         alpha = -(double)(p-1)*delta_twist;
-        gamma = (double)p*delta_twist;
+        gamma_angle = (double)p*delta_twist;
         set_R_3(R_alpha,alpha);
-        set_R_3(R_gamma,gamma);
+        set_R_3(R_gamma,gamma_angle);
 
         product_matrix(Frame,R_alpha);
         product_matrix(Frame,R_gamma);
