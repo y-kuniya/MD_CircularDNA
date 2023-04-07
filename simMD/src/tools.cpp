@@ -16,6 +16,48 @@ void print_matrix(const SquareVec &a,const int n){
     cout<<endl;
 }
 
+// 行列Bを行列Aに掛ける
+void product_matrix(SquareVec &A, const SquareVec &B){
+    SquareVec C(3,vector<double>(3,0.0));
+
+    for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            for(int k=0;k<3;k++){
+                C[i][j] += A[i][k]*B[k][j];
+            }
+        }
+    }
+
+    for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            A[i][j] = C[i][j];
+        }
+    }
+}
+
+// 一番最初に行列Rが0.0に初期化されている必要がある
+void set_R_3(SquareVec &Rotation,const double angle){
+    double cosAngle = cos(angle);
+    double sinAngle = sin(angle);
+
+    Rotation[0][0] = cosAngle;
+    Rotation[0][1] = -sinAngle;
+    Rotation[1][0] = sinAngle;
+    Rotation[1][1] = cosAngle;
+    Rotation[2][2] = 1.0;
+}
+
+void set_R_2(SquareVec &Rotation,const double angle){
+    double cosAngle = cos(angle);
+    double sinAngle = sin(angle);
+
+    Rotation[0][0] = cosAngle;
+    Rotation[0][2] = sinAngle;
+    Rotation[1][1] = 1.0;
+    Rotation[2][0] = -sinAngle;
+    Rotation[2][2] = cosAngle;
+}
+
 void Cholesky_decomposition(SquareVec &L,const SquareVec &a,const int n){
     double s;
     for(int i=0;i<n;i++){
