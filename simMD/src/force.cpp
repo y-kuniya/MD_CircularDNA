@@ -38,6 +38,10 @@ Force::calc_force(Variables *vars){
     calc_Beta(vars);
     // 曲げ弾性力の計算
     calc_bending(vars);
+    // ねじれ角の計算
+    calc_AlphaPlusGamma(vars);
+    // ねじれ弾性の計算
+    calc_torsional(vars);
 }
 
 // ------------------------------------トルクの計算-------------------------------------------

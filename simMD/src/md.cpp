@@ -91,7 +91,7 @@ MD::set_PN(int PN_){
 // 初期値の設定  varsのr,f,v,uを設定する
 void 
 MD::makeconf(void){
-    const double delta_Lk = 0.0;
+    const double delta_Lk = -6.0;
     const double delta_twist = (2.0*M_PI)*delta_Lk/(double)PN; 
 
     double *r = vars->r.data();
@@ -108,7 +108,7 @@ MD::makeconf(void){
 
     // ---1. フレームの設定---
     // y軸回転は一定なので最初に設定する
-    beta = 2.0*M_PI/(double)PN;
+    beta = -2.0*M_PI/(double)PN;
     set_R_2(R_beta,beta);
 
     // 0番目のbeadのフレームを設定する
@@ -130,13 +130,14 @@ MD::makeconf(void){
         set_R_3(R_gamma,gamma_angle);
 
         product_matrix(Frame,R_alpha);
+        product_matrix(Frame,R_beta);
         product_matrix(Frame,R_gamma);
 
         // Frameをvarsの変数に格納
         for(int i=0;i<3;i++){
-        f[i] = Frame[i][0];
-        v[i] = Frame[i][1];
-        u[i] = Frame[i][2];
+        f[3*p+i] = Frame[i][0];
+        v[3*p+i] = Frame[i][1];
+        u[3*p+i] = Frame[i][2];
         }
     }
 
@@ -217,8 +218,6 @@ MD::update_corr(vector<double> &R){
             r[i] += D_sqrt[i][j]*R[j];
         }
     }
-    // 5. 位置の計算が終わったのでフレームの計算
-    // vars->calc_u();
 }
 
 // -----------------------フレームに関した予測子の計算-----------------------
@@ -359,6 +358,61 @@ MD::update_frame_corr(vector<double> &R){
 //     }
 // }
 
+void 
+MD::make_trajectory(void){
+    const int STEP      = 100000;
+    const int DISPOSE   = 0;
+    const int INTERVAL  = 100;
+
+    random_device rnd;
+    mt19937 mt(rnd());
+    normal_distribution<> dist(0.0,sqrt(2.0*dt));
+    normal_distribution<> dist_phi(0.0,sqrt(2.0*Dr*dt));
+
+    // 1. 初期配置の設定
+    set_PN(30);
+    makeconf(); // set_PN()でSIZEが確定してから呼ぶ
+    vector<double> R(SIZE,0.0); // set_PN()でSIZEが確定してから呼ぶ
+
+    // 3. 時間発展
+    for(int step=0;step<STEP;step++){
+        // conf ファイルを書き出す。
+        if (step%INTERVAL ==0){
+             vars->export_conf();
+            //  vars->print_positon();
+            //  cout<<step<<endl;
+        }
+        if(step%1000==0){
+            cout<<step<<endl;
+        }
+
+
+        // ---predetor--- 
+        // 位置
+        for(int i=0;i<SIZE;i++){
+            R[i] = dist(mt);
+        }
+        update_pred(R);
+        // frame
+        for(int i=0;i<SIZE;i++){
+            R[i] = dist_phi(mt);
+        }
+        update_frame_pred(R);
+
+        // ---corretor---
+        // 位置
+        for(int i=0;i<SIZE;i++){
+            R[i] = dist(mt);
+        }
+        update_corr(R);
+        // frame
+        for(int i=0;i<SIZE;i++){
+            R[i] = dist_phi(mt);
+        }
+        update_frame_corr(R);
+    }
+
+}
 
 // ----------------------squared distance of center of mass の計算------------------------------
 // void 

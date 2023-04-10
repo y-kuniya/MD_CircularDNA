@@ -5,7 +5,7 @@
 using SquareVec = std::vector<std::vector<double>>;
 
 void print_matrix(const SquareVec &a,const int n);
-void product_matrix(const SquareVec &A,const SquareVec &B);
+void product_matrix(SquareVec &A,const SquareVec &B);
 void set_R_3(SquareVec &Rotation,const double angle);
 void set_R_2(SquareVec &Rotation,const double angle);
 void Cholesky_decomposition(SquareVec &L,const SquareVec &a,const int n);
