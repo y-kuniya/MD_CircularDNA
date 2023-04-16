@@ -18,6 +18,18 @@ Force::init(const int PN_){
     AG.resize(PN,0.0);
 }
 
+double 
+Force::calc_total_twist(void){
+    double Tw = 0.0;
+    for (int p=0;p<PN;p++){
+        Tw += AG[p];
+    }
+
+    Tw/= 2.0*M_PI;
+    
+    return Tw;
+}
+
 void 
 Force::clear(void){
     for(auto &f:F){
@@ -239,6 +251,8 @@ Force::calc_AlphaPlusGamma(Variables *vars){
     for(int p=0;p<PN;p++){
         cosAG[p] *= inv_1_Plus_cosBeta[p];
         sinAG[p] *= inv_1_Plus_cosBeta[p];
+        // acosのために補正を入れる
+        if(cosAG[p] > 1.0) cosAG[p] -= 1e-10;
     }
 
 

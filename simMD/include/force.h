@@ -21,13 +21,13 @@ class Force{
     void calc_bending(Variables *vars);
     void calc_AlphaPlusGamma(Variables *vars); // ねじれ角
     void calc_torsional(Variables *vars);
-
     public:
     vector<double> F;
     vector<double> T;
     void init(const int PN_);
     void calc_force(Variables *vars);
     void calc_torque();
+    double calc_total_twist(void);
 };
 
 #endif

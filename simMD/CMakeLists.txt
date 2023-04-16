@@ -6,7 +6,8 @@ add_library(simMD STATIC
         ./src/observer.cpp 
         ./src/tools.cpp
         ./src/force.cpp
-        ./src/md.cpp)
+        ./src/md.cpp
+        ./src/md_dry.cpp)
 
 target_compile_features(simMD PRIVATE cxx_std_11)
 target_include_directories(simMD INTERFACE ./include)

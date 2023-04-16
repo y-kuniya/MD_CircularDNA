@@ -9,6 +9,7 @@ class Observer{
     public:
     void set_c0(Variables *vars);
     double squared_distance(Variables *vars);
+    double writhing_number(Variables *vars);
 };
 
 #endif
