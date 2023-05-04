@@ -12,9 +12,9 @@ writhing     Wr = 0
 (Linking number Lk = )
 の円形から100万ステップ回したときの最終的な配置
 
-![画像1](./Figure_1.png)
+![画像1](./png/Figure_1.png)
 
 また、各ステップにおけるTw,Wr,Lkをplotしたもの
 
-![画像2](./Figure_2.png)
+![画像2](./png/Figure_2.png)
 
