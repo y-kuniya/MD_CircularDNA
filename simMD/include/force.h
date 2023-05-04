@@ -13,7 +13,6 @@ class Force{
     vector<double> inv_1_Plus_cosBeta;
     vector<double> cosAG;
     vector<double> sinAG;
-    vector<double> AG;
     void clear(void);
     void calc_excluedVolume(Variables *vars);
     void calc_stretching(Variables *vars);
@@ -24,10 +23,10 @@ class Force{
     public:
     vector<double> F;
     vector<double> T;
+    vector<double> AG;
     void init(const int PN_);
     void calc_force(Variables *vars);
     void calc_torque();
-    double calc_total_twist(void);
 };
 
 #endif

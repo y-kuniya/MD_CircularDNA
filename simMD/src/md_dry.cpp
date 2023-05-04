@@ -37,9 +37,8 @@ MDdry::set_PN(int PN_){
 // 初期値の設定  varsのr,f,v,uを設定する
 void 
 MDdry::makeconf(void){
-    const double delta_Lk = -12.0;
     // const double delta_Lk = 0.0;
-    const double delta_twist = (2.0*M_PI)*delta_Lk/(double)PN; 
+    const double delta_twist = (2.0*M_PI)*Lk/(double)PN; 
 
     double *r = vars->r.data();
     double *f = vars->f.data();
@@ -200,11 +199,11 @@ MDdry::update_frame_corr(vector<double> &R){
     force->calc_torque();
     // 3.fの更新
     for(int p=0;p<PN;p++){
-        // 2-1. delta_phiの計算
+        // 3-1. delta_phiの計算
         DT[p] += Dr*T[p]*dt;
         DT[p] *= 0.5;
         delta_phi = DT[p] + R[p];
-        // 2-2. fの更新
+        // 3-2. fの更新
         f_dot_u = 0.0;
         for(int i=0;i<3;i++){
             f_dot_u += f[3*p+i]*u[3*p+i];
@@ -226,9 +225,9 @@ MDdry::update_frame_corr(vector<double> &R){
 //-----------------------1つのtrajectoryを作り、confファイルを吐く-----------------------------
 void 
 MDdry::make_trajectory(void){
-    const int STEP      = 400000;
+    const int STEP      = 1000000;
     const int DISPOSE   = 0;
-    const int INTERVAL  = 200;
+    const int INTERVAL  = 1000;
 
     random_device rnd;
     mt19937 mt(rnd());
@@ -236,29 +235,13 @@ MDdry::make_trajectory(void){
     normal_distribution<> dist_phi(0.0,sqrt(2.0*Dr*dt));
 
     // 1. 初期配置の設定
-    set_PN(60);
+    set_PN(30);
     makeconf(); // set_PN()でSIZEが確定してから呼ぶ
     vector<double> R(SIZE,0.0); // set_PN()でSIZEが確定してから呼ぶ
     vector<double> R_phi(PN,0.0);
 
     // 3. 時間発展
     for(int step=0;step<STEP;step++){
-        // conf ファイルを書き出す。
-        if (step%INTERVAL ==0){
-             vars->export_conf();
-            //  vars->print_positon();
-            //  cout<<step<<endl;
-        }
-        if(step%5000==0){
-            cout<<step<<" : ";
-            double Wr = obs->writhing_number(vars);
-            double Tw = force->calc_total_twist();
-            cout<<-Wr<<" ";
-            // cout<< Tw <<endl;
-            cout<<100*(Wr+Tw+12.0)/12.0 <<endl;
-        }
-
-
         // ---predetor--- 
         // 位置
         for(int i=0;i<SIZE;i++){
@@ -282,7 +265,18 @@ MDdry::make_trajectory(void){
             R_phi[i] = dist_phi(mt);
         }
         update_frame_corr(R_phi);
-    }
 
+        // conf ファイルを書き出す。
+        if (step%INTERVAL ==0){
+                vars->export_conf();
+                obs->export_Wr_Tw(step,vars,force);
+            //  vars->print_positon();
+            //  cout<<step<<endl;
+        }
+        if(step%100000==0){
+            cout<<step<<endl;
+        }
+    }
+    vars->export_conf_csv();
 }
 

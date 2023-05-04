@@ -38,62 +38,12 @@ MD::set_PN(int PN_){
     force->init(PN);
 }
 
-// 初期配置の設定 -- vars のr,b,uを設定する --
-// void
-// MD::makeconf(void){
-//     double r_sub[3];
-//     const double Beta = 2.0*M_PI/(double)PN;
-//     const double cosBeta = cos(Beta);
-//     const double sinBeta = sin(Beta);
-
-//     double *r = vars->r.data();
-//     double *f = vars->f.data();
-//     double *v = vars->v.data();
-//     double *u = vars->u.data();
-
-//     // 0番目の粒子をセット
-//     for(int i=0;i<3;i++){
-//         r[i] = 0.0;
-//     }
-    
-//     f[0] = 1;
-//     f[1] = 0;
-//     f[2] = 0;
-
-//     v[0] = 0;
-//     v[1] = 1;
-//     v[2] = 0;
-
-//     u[0] = 0;
-//     u[1] = 0;
-//     u[2] = 1;
-
-//     for(int p=1;p<PN;p++){
-//         // r
-//         for(int i=0;i<3;i++){
-//             r[3*p+i] = r[3*(p-1)+i] + u[3*(p-1)+i]; 
-//         }
-//         // f
-//         for(int i=0;i<3;i++){
-//             f[3*p+i] = cosBeta*f[3*(p-1)+i] - sinBeta*u[3*(p-1)+i];
-//         }
-//         // u
-//         for(int i=0;i<3;i++){
-//             u[3*p+i] = sinBeta*f[3*(p-1)+i] + cosBeta*u[3*(p-1)+i];
-//         }
-//     }
-
-//     // b.inv_bの計算
-//     // vars->calc_u();
-    
-// }
-
 // 初期値の設定  varsのr,f,v,uを設定する
 void 
 MD::makeconf(void){
-    const double delta_Lk = -6.0;
+    // const double delta_Lk = -6.0;
     // const double delta_Lk = -4.0;
-    const double delta_twist = (2.0*M_PI)*delta_Lk/(double)PN; 
+    const double delta_twist = (2.0*M_PI)*Lk/(double)PN; 
 
     double *r = vars->r.data();
     double *f = vars->f.data();
@@ -239,10 +189,10 @@ MD::update_frame_pred(vector<double> &R){
     force->calc_torque();
     // 3. fの更新
     for(int p=0;p<PN;p++){    
-        // 2-1. delta_phiの計算
+        // 3-1. delta_phiの計算
         DT[p] = Dr*T[p]*dt;
         delta_phi = DT[p] + R[p];
-        // 2-2. f_predの更新
+        // 3-2. f_predの更新
         f_dot_u = 0.0;
         for(int i=0;i<3;i++){
             f_dot_u += f[3*p+i]*u_pred[3*p+i];
@@ -280,11 +230,11 @@ MD::update_frame_corr(vector<double> &R){
     force->calc_torque();
     // 3.fの更新
     for(int p=0;p<PN;p++){
-        // 2-1. delta_phiの計算
+        // 3-1. delta_phiの計算
         DT[p] += Dr*T[p]*dt;
         DT[p] *= 0.5;
         delta_phi = DT[p] + R[p];
-        // 2-2. fの更新
+        // 3-2. fの更新
         f_dot_u = 0.0;
         for(int i=0;i<3;i++){
             f_dot_u += f[3*p+i]*u[3*p+i];
@@ -307,9 +257,9 @@ MD::update_frame_corr(vector<double> &R){
 //-----------------------1つのtrajectoryを作り、confファイルを吐く-----------------------------
 void 
 MD::make_trajectory(void){
-    const int STEP      = 1000;
+    const int STEP      = 1000000;
     const int DISPOSE   = 0;
-    const int INTERVAL  = 1;
+    const int INTERVAL  = 1000;
 
     random_device rnd;
     mt19937 mt(rnd());
@@ -324,18 +274,6 @@ MD::make_trajectory(void){
 
     // 3. 時間発展
     for(int step=0;step<STEP;step++){
-        // conf ファイルを書き出す。
-        if (step%INTERVAL ==0){
-             vars->export_conf();
-            //  vars->print_positon();
-            //  cout<<step<<endl;
-        }
-        if(step%1000==0){
-            cout<<step<<" : ";
-            cout<<obs->writhing_number(vars)<<endl;
-        }
-
-
         // ---predetor--- 
         // 位置
         for(int i=0;i<SIZE;i++){
@@ -359,8 +297,17 @@ MD::make_trajectory(void){
             R_phi[i] = dist_phi(mt);
         }
         update_frame_corr(R_phi);
-    }
 
+        // conf ファイルを書き出す。
+        if (step%INTERVAL ==0){
+            vars->export_conf();
+            obs->export_Wr_Tw(step,vars,force);
+        }
+        if(step%10000==0){
+            cout<<step<<endl;
+        }
+    }
+    vars->export_conf_csv();
 }
 
 // ----------------------squared distance of center of mass の計算------------------------------

@@ -24,6 +24,7 @@ class Variables{
     void export_conf(void);
 
     void print_positon(void);
+    void export_conf_csv(void);
 };
 
 #endif

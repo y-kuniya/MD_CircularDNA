@@ -1,8 +1,8 @@
-#include <md_dry.h>
+#include <md.h>
 
 int main(int argc, char const *argv[]){
-    MDdry *md;
-    md = new MDdry();
+    MD *md;
+    md = new MD();
     md->make_trajectory();
     return 0;
 }

@@ -18,18 +18,6 @@ Force::init(const int PN_){
     AG.resize(PN,0.0);
 }
 
-double 
-Force::calc_total_twist(void){
-    double Tw = 0.0;
-    for (int p=0;p<PN;p++){
-        Tw += AG[p];
-    }
-
-    Tw/= 2.0*M_PI;
-    
-    return Tw;
-}
-
 void 
 Force::clear(void){
     for(auto &f:F){

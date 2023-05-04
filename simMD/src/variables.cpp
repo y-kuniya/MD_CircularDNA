@@ -109,6 +109,18 @@ Variables::export_conf(void){
     ofs.close();
 }
 
+void 
+Variables::export_conf_csv(void){
+
+    char filename[256];
+    sprintf(filename,"../data/conf.csv");
+    ofstream ofs(filename, std::ios::out);
+
+    calc_center();
+    for(int p = 0;p<num;p++){
+        ofs<<r[3*p] - c[0]<<","<<r[3*p+1] - c[1]<<","<<r[3*p+2] - c[2]<<endl;
+    }
+}
 
 #include <iostream>
 void 

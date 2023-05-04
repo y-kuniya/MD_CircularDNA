@@ -1,6 +1,15 @@
 #include "../include/observer.h"
 #include <cmath>
 
+Observer::Observer(void){
+    string filename("../data/topologicalPropaties.csv");
+    ofs.open(filename, std::ios_base::out);
+}
+
+Observer::~Observer(void){
+    ofs.close();
+}
+
 void 
 Observer::set_c0(Variables *vars){
     vars->calc_center();
@@ -66,4 +75,28 @@ Observer::writhing_number(Variables *vars){
     // Wr /= 2.0*M_PI;
     Wr /= 4.0*M_PI;
     return Wr;
+}
+
+double 
+Observer::total_twist(Force *force){
+    double Tw = 0.0;
+
+    for(auto& ag:force->AG){
+        Tw += ag;
+    }
+    Tw/= 2.0*M_PI;
+    
+    return Tw;
+}
+
+void
+Observer::export_Wr_Tw(int step,Variables *vars,Force *force){
+    double Wr = writhing_number(vars);
+    double Tw = total_twist(force);
+    
+    // double DLk;
+    // if(Lk==0)   DLk = 100.0*(Wr+Tw-Lk);
+    // else        DLk= 100.0*(Wr+Tw-Lk)/Lk;
+    
+    ofs<<(step+1)<<","<<Wr<<","<<Tw<<","<<Wr+Tw<<endl;
 }
